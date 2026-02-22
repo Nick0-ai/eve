@@ -1,6 +1,7 @@
 """
 Modal app for real GPU training + inference.
 Fine-tunes TinyLlama 1.1B with LoRA on user-provided datasets.
+v2 — fixed SFTConfig args for trl>=0.28
 """
 
 import modal
@@ -129,7 +130,6 @@ def train_model(
         eval_strategy="epoch",
         save_strategy="epoch",
         fp16=True,
-        max_seq_length=512,
         dataset_text_field="text",
     )
 
