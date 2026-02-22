@@ -17,10 +17,10 @@ const EvalCard = ({ results }: EvalCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-violet-400"
+    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm"
   >
     <div className="px-4 py-3 flex items-center gap-2 border-b border-border">
-      <BarChart3 className="w-4 h-4 text-violet-400" />
+      <BarChart3 className="w-4 h-4 text-primary" />
       <span className="text-sm font-semibold text-foreground">Auto-Evaluation</span>
     </div>
 

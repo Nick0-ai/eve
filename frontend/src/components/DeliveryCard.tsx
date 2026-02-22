@@ -35,6 +35,7 @@ const DeliveryCard = ({
         input_text: playgroundInput,
         task,
         examples,
+        model_id: modelId,
       });
       setPlaygroundOutput(res.output);
     } catch {
@@ -47,7 +48,7 @@ const DeliveryCard = ({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card border border-primary/30 rounded-xl overflow-hidden border-l-4 border-l-primary"
+      className="bg-card border border-primary/30 rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm"
     >
       <div className="px-4 py-3 flex items-center gap-2 border-b border-border bg-primary/5">
         <CheckCircle2 className="w-4 h-4 text-primary" />
@@ -70,7 +71,7 @@ const DeliveryCard = ({
           </div>
           <div className="text-center">
             <div className="flex items-center justify-center gap-0.5">
-              <Leaf className="w-3 h-3 text-emerald-400" />
+              <Leaf className="w-3 h-3 text-green-500" />
               <p className="text-lg font-bold text-foreground">{co2Grams}g</p>
             </div>
             <p className="text-[10px] text-muted-foreground">CO₂</p>

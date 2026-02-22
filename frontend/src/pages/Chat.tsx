@@ -243,7 +243,12 @@ const Chat = () => {
     setEvalResults([]);
     setDeliveryData(null);
 
-    await streamDeploy({
+    await streamDeploy(
+      {
+        dataset: datasetRef.current,
+        task: taskDescriptionRef.current,
+      },
+      {
       onStatus: (data) => {
         setTrainingStatus(data.message);
         setTrainingProgress(data.progress);
@@ -307,6 +312,8 @@ const Chat = () => {
       },
     });
   };
+
+  void taskDescription; // referenced by DeliveryCard via state
 
   // ---- Render ----
 

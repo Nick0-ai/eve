@@ -21,11 +21,11 @@ const CodeCard = ({ code, loading, onDeploy }: CodeCardProps) => {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-emerald-400"
+      className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm"
     >
       <div className="px-4 py-3 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-2">
-          <Code2 className="w-4 h-4 text-emerald-400" />
+          <Code2 className="w-4 h-4 text-primary" />
           <span className="text-sm font-semibold text-foreground">Training Script</span>
           <span className="text-[10px] font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded">
             train.py
@@ -53,7 +53,7 @@ const CodeCard = ({ code, loading, onDeploy }: CodeCardProps) => {
             <p className="text-xs text-muted-foreground text-center mt-4">Generating training script...</p>
           </div>
         ) : (
-          <pre className="p-4 text-[12px] leading-5 font-mono text-emerald-400 whitespace-pre overflow-x-auto">
+          <pre className="p-4 text-[12px] leading-5 font-mono text-green-400 whitespace-pre overflow-x-auto">
             {code}
           </pre>
         )}

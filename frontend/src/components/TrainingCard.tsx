@@ -31,7 +31,7 @@ const TrainingCard = ({
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-amber-400"
+    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-amber-400 shadow-sm"
   >
     <div className="px-4 py-3 flex items-center gap-2 border-b border-border">
       <Activity className="w-4 h-4 text-amber-400" />
