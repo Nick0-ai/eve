@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { streamChat, generateDataset, generateCode, scanGPU, streamDeploy } from "@/lib/api";
 import StepIndicator from "@/components/StepIndicator";
 import InputBar from "@/components/InputBar";
@@ -9,6 +10,7 @@ import ScanCard from "@/components/ScanCard";
 import TrainingCard from "@/components/TrainingCard";
 import EvalCard from "@/components/EvalCard";
 import DeliveryCard from "@/components/DeliveryCard";
+import { Sparkles } from "lucide-react";
 
 // ---- Types ----
 
@@ -64,17 +66,27 @@ const Chat = () => {
   const [evalResults, setEvalResults] = useState<EvalResult[]>([]);
   const [deliveryData, setDeliveryData] = useState<Record<string, unknown> | null>(null);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const workspaceScrollRef = useRef<HTMLDivElement>(null);
   const idCounter = useRef(0);
+
+  const hasMessages = messages.length > 0;
 
   const newId = () => `msg-${++idCounter.current}`;
 
-  // Auto-scroll
+  // Auto-scroll chat panel
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
-  }, [messages, dataset, code, scanResult, trainingProgress, evalResults, deliveryData]);
+  }, [messages]);
+
+  // Auto-scroll workspace panel
+  useEffect(() => {
+    if (workspaceScrollRef.current) {
+      workspaceScrollRef.current.scrollTop = workspaceScrollRef.current.scrollHeight;
+    }
+  }, [dataset, code, scanResult, trainingProgress, evalResults, deliveryData]);
 
   // ---- Handle actions from Eve's stream ----
 
@@ -137,7 +149,6 @@ const Chat = () => {
     async (content: string) => {
       if (isStreaming) return;
 
-      // Save first user message as task description
       if (messages.length === 0) {
         setTaskDescription(content);
         taskDescriptionRef.current = content;
@@ -200,8 +211,7 @@ const Chat = () => {
     [messages, isStreaming, handleAction]
   );
 
-  // ---- Dataset approved → send message to advance ----
-
+  // ---- Dataset approved ----
   const handleDatasetApproved = () => {
     sendMessage("Dataset approved. Generate the training code.");
   };
@@ -223,20 +233,15 @@ const Chat = () => {
     setDatasetLoading(false);
   };
 
-  // ---- Code approved → advance ----
-
   const handleCodeDeploy = () => {
     sendMessage("Code looks good. Find the best GPU.");
   };
-
-  // ---- Scan done → deploy ----
 
   const handleScanDeploy = () => {
     sendMessage("Deploy to this GPU. Start training.");
   };
 
-  // ---- Training simulation ----
-
+  // ---- Training ----
   const startTraining = async () => {
     setTrainingActive(true);
     setTrainingEvents([]);
@@ -249,164 +254,310 @@ const Chat = () => {
         task: taskDescriptionRef.current,
       },
       {
-      onStatus: (data) => {
-        setTrainingStatus(data.message);
-        setTrainingProgress(data.progress);
-      },
-      onLog: (data) => {
-        setTrainingEpoch(data.epoch);
-        setTrainingStep(data.step);
-        setTrainingTotalSteps(data.total_steps);
-        setTrainingLoss(data.loss);
-        setTrainingLR(data.lr);
-        setTrainingProgress(data.progress);
-      },
-      onCheckpoint: (data) => {
-        setTrainingEvents((prev) => [
-          ...prev,
-          {
-            type: "checkpoint",
-            message: `\u2713 Checkpoint saved at step ${data.step} (${data.size_gb} GB)`,
-            color: "text-primary",
-          },
-        ]);
-      },
-      onEviction: (data) => {
-        setTrainingEvents((prev) => [
-          ...prev,
-          {
-            type: "eviction",
-            message: `\u26a0 EVICTION \u2014 Migrating from ${data.from_az} to ${data.to_az}...`,
-            color: "text-amber-400",
-          },
-        ]);
-      },
-      onMigrated: (data) => {
-        setTrainingEvents((prev) => [
-          ...prev,
-          {
-            type: "migrated",
-            message: `\u2713 Restored in ${data.recovery_sec}s. Zero data loss.`,
-            color: "text-primary",
-          },
-        ]);
-      },
-      onEval: (data) => {
-        setEvalResults((prev) => [...prev, data]);
-        setTrainingProgress(data.version === 1 ? 85 : 95);
-      },
-      onComplete: (data) => {
-        setTrainingActive(false);
-        setTrainingProgress(100);
-        setTrainingStatus("Complete");
-        setStep("done");
-        setDeliveryData(data);
-        setTrainingEvents((prev) => [
-          ...prev,
-          {
-            type: "complete",
-            message: `\u2713 Training complete \u2014 ${data.accuracy}% accuracy`,
-            color: "text-primary",
-          },
-        ]);
-      },
-    });
+        onStatus: (data) => {
+          setTrainingStatus(data.message);
+          setTrainingProgress(data.progress);
+        },
+        onLog: (data) => {
+          setTrainingEpoch(data.epoch);
+          setTrainingStep(data.step);
+          setTrainingTotalSteps(data.total_steps);
+          setTrainingLoss(data.loss);
+          setTrainingLR(data.lr);
+          setTrainingProgress(data.progress);
+        },
+        onCheckpoint: (data) => {
+          setTrainingEvents((prev) => [
+            ...prev,
+            {
+              type: "checkpoint",
+              message: `\u2713 Checkpoint saved at step ${data.step} (${data.size_gb} GB)`,
+              color: "text-primary",
+            },
+          ]);
+        },
+        onEviction: (data) => {
+          setTrainingEvents((prev) => [
+            ...prev,
+            {
+              type: "eviction",
+              message: `\u26a0 EVICTION \u2014 Migrating from ${data.from_az} to ${data.to_az}...`,
+              color: "text-amber-400",
+            },
+          ]);
+        },
+        onMigrated: (data) => {
+          setTrainingEvents((prev) => [
+            ...prev,
+            {
+              type: "migrated",
+              message: `\u2713 Restored in ${data.recovery_sec}s. Zero data loss.`,
+              color: "text-primary",
+            },
+          ]);
+        },
+        onEval: (data) => {
+          setEvalResults((prev) => [...prev, data]);
+          setTrainingProgress(data.version === 1 ? 85 : 95);
+        },
+        onComplete: (data) => {
+          setTrainingActive(false);
+          setTrainingProgress(100);
+          setTrainingStatus("Complete");
+          setStep("done");
+          setDeliveryData(data);
+          setTrainingEvents((prev) => [
+            ...prev,
+            {
+              type: "complete",
+              message: `\u2713 Training complete \u2014 ${data.accuracy}% accuracy`,
+              color: "text-primary",
+            },
+          ]);
+        },
+      }
+    );
   };
 
-  void taskDescription; // referenced by DeliveryCard via state
+  void taskDescription;
+
+  // ---- Determine which action cards to show in right panel ----
+  const lastActionMsg = [...messages].reverse().find((m) => m.action);
+  const currentAction = lastActionMsg?.action;
 
   // ---- Render ----
 
   return (
-    <div className="h-screen flex flex-col">
-      <StepIndicator currentStep={step} />
+    <div className="h-screen flex flex-col overflow-hidden">
+      <AnimatePresence mode="wait">
+        {!hasMessages ? (
+          /* ========== VIEW 1: LANDING ========== */
+          <motion.div
+            key="landing"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1 flex flex-col items-center justify-center relative overflow-hidden"
+          >
+            {/* Mesh gradient blobs */}
+            <div className="mesh-blob mesh-blob-yellow animate-float-slow" style={{ width: 500, height: 500, top: '10%', left: '15%' }} />
+            <div className="mesh-blob mesh-blob-blue animate-float-slower" style={{ width: 400, height: 400, top: '20%', right: '10%' }} />
+            <div className="mesh-blob mesh-blob-warm animate-float-slow" style={{ width: 350, height: 350, bottom: '15%', left: '40%' }} />
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-3xl mx-auto space-y-4">
-          {/* Welcome message if empty */}
-          {messages.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-3xl font-bold text-foreground mb-2">
-                What do you want to build?
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Describe your AI model in plain language. Eve handles the rest.
-              </p>
-            </div>
-          )}
-
-          {messages.map((msg) => (
-            <div key={msg.id}>
-              <MessageBubble
-                role={msg.role}
-                content={msg.content}
-                isStreaming={msg.isStreaming && !msg.content}
+            <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex justify-center mb-8"
               >
-                {/* Render action cards inline after the message */}
-                {msg.action === "GENERATE_DATASET" && (
-                  <DatasetCard
-                    examples={dataset}
-                    loading={datasetLoading}
-                    onApprove={!datasetLoading && dataset.length > 0 ? handleDatasetApproved : undefined}
-                    onRegenerate={!datasetLoading ? handleDatasetRegenerate : undefined}
-                  />
-                )}
-                {msg.action === "GENERATE_CODE" && (
-                  <CodeCard
-                    code={code}
-                    loading={codeLoading}
-                    onDeploy={!codeLoading && code ? handleCodeDeploy : undefined}
-                  />
-                )}
-                {msg.action === "SCAN_GPU" && (
-                  <ScanCard
-                    result={scanResult as any}
-                    loading={scanLoading}
-                    onDeploy={!scanLoading && scanResult ? handleScanDeploy : undefined}
-                  />
-                )}
-                {msg.action === "START_TRAINING" && (
+                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3.5 py-1.5 rounded-full text-xs font-medium">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Powered by NERVE
+                </div>
+              </motion.div>
+
+              {/* Title */}
+              <motion.h1
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="text-4xl sm:text-5xl font-bold text-foreground text-center tracking-tight mb-3"
+              >
+                What do you want to build?
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="text-base text-muted-foreground text-center mb-10 max-w-md mx-auto"
+              >
+                Describe your AI model in plain language. Eve handles dataset, code, GPU, training, and deployment.
+              </motion.p>
+
+              {/* Floating input */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+              >
+                <InputBar
+                  onSend={sendMessage}
+                  disabled={isStreaming}
+                  placeholder="Describe the AI you want to build..."
+                  variant="landing"
+                />
+              </motion.div>
+
+              {/* Subtle hints */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="flex justify-center gap-6 mt-10"
+              >
+                {["Sentiment classifier", "Document summarizer", "Code reviewer"].map((hint) => (
+                  <button
+                    key={hint}
+                    onClick={() => sendMessage(hint)}
+                    className="text-xs text-muted-foreground hover:text-foreground border border-border hover:border-primary/40 px-3 py-1.5 rounded-full transition-all hover:bg-primary/5"
+                  >
+                    {hint}
+                  </button>
+                ))}
+              </motion.div>
+            </div>
+
+            <p className="absolute bottom-6 text-[10px] text-muted-foreground/40 tracking-widest uppercase">
+              Europe Hack 2026
+            </p>
+          </motion.div>
+        ) : (
+          /* ========== VIEW 2: SPLIT WORKSPACE ========== */
+          <motion.div
+            key="workspace"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            {/* Header */}
+            <div className="h-12 border-b border-border bg-white flex items-center justify-between px-5 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground tracking-tight">EVE</span>
+                </div>
+                <div className="w-px h-5 bg-border" />
+                <StepIndicator currentStep={step} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
+                  {taskDescription.slice(0, 40)}{taskDescription.length > 40 ? '...' : ''}
+                </span>
+              </div>
+            </div>
+
+            {/* Split panels */}
+            <div className="flex-1 flex overflow-hidden">
+              {/* LEFT: Chat panel */}
+              <div className="w-[35%] flex flex-col border-r border-border bg-white">
+                <div ref={chatScrollRef} className="flex-1 overflow-y-auto px-4 py-4">
                   <div className="space-y-3">
-                    <TrainingCard
-                      progress={trainingProgress}
-                      epoch={trainingEpoch}
-                      step={trainingStep}
-                      totalSteps={trainingTotalSteps}
-                      loss={trainingLoss}
-                      lr={trainingLR}
-                      events={trainingEvents}
-                      status={trainingStatus}
-                    />
-                    {evalResults.length > 0 && <EvalCard results={evalResults} />}
-                    {deliveryData && (
-                      <DeliveryCard
-                        accuracy={(deliveryData.accuracy as number) || 94.2}
-                        costUsd={(deliveryData.cost_usd as number) || 2.96}
-                        co2Grams={(deliveryData.co2_grams as number) || 54}
-                        totalTime={(deliveryData.total_time as string) || "42m"}
-                        modelId={(deliveryData.model_id as string) || "eve-0001"}
-                        task={taskDescription}
-                        examples={dataset}
+                    {messages.map((msg) => (
+                      <MessageBubble
+                        key={msg.id}
+                        role={msg.role}
+                        content={msg.content}
+                        isStreaming={msg.isStreaming && !msg.content}
                       />
+                    ))}
+                  </div>
+                </div>
+                <div className="border-t border-border p-3">
+                  <InputBar
+                    onSend={sendMessage}
+                    disabled={isStreaming || trainingActive}
+                    placeholder="Type a message..."
+                    variant="compact"
+                  />
+                </div>
+              </div>
+
+              {/* RIGHT: Workspace panel */}
+              <div className="w-[65%] flex flex-col bg-white">
+                <div ref={workspaceScrollRef} className="flex-1 overflow-y-auto">
+                  <div className="workspace-bg min-h-full">
+                    {/* No action yet — empty state */}
+                    {!currentAction && (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center py-20">
+                          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                            <Sparkles className="w-6 h-6 text-primary/60" />
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Eve is analyzing your request...
+                          </p>
+                          <p className="text-xs text-muted-foreground/60 mt-1">
+                            Results will appear here as she works.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action cards */}
+                    {currentAction && (
+                      <div className="p-6 max-w-2xl mx-auto space-y-4">
+                        {currentAction === "GENERATE_DATASET" && (
+                          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                            <DatasetCard
+                              examples={dataset}
+                              loading={datasetLoading}
+                              onApprove={!datasetLoading && dataset.length > 0 ? handleDatasetApproved : undefined}
+                              onRegenerate={!datasetLoading ? handleDatasetRegenerate : undefined}
+                            />
+                          </motion.div>
+                        )}
+
+                        {currentAction === "GENERATE_CODE" && (
+                          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                            <CodeCard
+                              code={code}
+                              loading={codeLoading}
+                              onDeploy={!codeLoading && code ? handleCodeDeploy : undefined}
+                            />
+                          </motion.div>
+                        )}
+
+                        {currentAction === "SCAN_GPU" && (
+                          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                            <ScanCard
+                              result={scanResult as any}
+                              loading={scanLoading}
+                              onDeploy={!scanLoading && scanResult ? handleScanDeploy : undefined}
+                            />
+                          </motion.div>
+                        )}
+
+                        {currentAction === "START_TRAINING" && (
+                          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                            <TrainingCard
+                              progress={trainingProgress}
+                              epoch={trainingEpoch}
+                              step={trainingStep}
+                              totalSteps={trainingTotalSteps}
+                              loss={trainingLoss}
+                              lr={trainingLR}
+                              events={trainingEvents}
+                              status={trainingStatus}
+                            />
+                            {evalResults.length > 0 && <EvalCard results={evalResults} />}
+                            {deliveryData && (
+                              <DeliveryCard
+                                accuracy={(deliveryData.accuracy as number) || 94.2}
+                                costUsd={(deliveryData.cost_usd as number) || 2.96}
+                                co2Grams={(deliveryData.co2_grams as number) || 54}
+                                totalTime={(deliveryData.total_time as string) || "42m"}
+                                modelId={(deliveryData.model_id as string) || "eve-0001"}
+                                task={taskDescription}
+                                examples={dataset}
+                              />
+                            )}
+                          </motion.div>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-              </MessageBubble>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <InputBar
-        onSend={sendMessage}
-        disabled={isStreaming || trainingActive}
-        placeholder={
-          step === "chat"
-            ? "Describe the AI you want to build..."
-            : "Type a message..."
-        }
-      />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

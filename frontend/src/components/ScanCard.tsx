@@ -40,7 +40,7 @@ const ScanCard = ({ result, loading, onDeploy }: ScanCardProps) => (
       <div className="p-6 text-center">
         <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
           <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          Scanning 12 cloud regions...
+          Scanning 3 Azure regions...
         </div>
       </div>
     ) : (
@@ -51,10 +51,11 @@ const ScanCard = ({ result, loading, onDeploy }: ScanCardProps) => (
             <p className="text-xs text-muted-foreground font-mono">{result.region}</p>
           </div>
           <div className="text-right">
+            <p className="text-xs text-muted-foreground mb-0.5">Spot price</p>
             <p className="text-2xl font-bold text-primary">${result.spot_price_usd_hr}/h</p>
-            <p className="text-xs text-muted-foreground">
-              <span className="line-through">${result.ondemand_price_usd_hr}/h</span>
-              <span className="text-primary font-semibold ml-1.5">-{result.savings_pct}%</span>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              vs <span className="line-through">${result.ondemand_price_usd_hr}/h</span> on-demand
+              <span className="text-green-600 font-semibold ml-1">-{result.savings_pct}%</span>
             </p>
           </div>
         </div>
@@ -83,7 +84,7 @@ const ScanCard = ({ result, loading, onDeploy }: ScanCardProps) => (
         </div>
 
         <div className="flex items-center justify-between bg-primary/10 rounded-lg px-3 py-2 mb-4">
-          <span className="text-xs text-muted-foreground">Estimated total cost</span>
+          <span className="text-xs text-muted-foreground">Estimated cost (~10 min training)</span>
           <span className="text-sm font-bold text-primary">${result.total_cost_estimate_usd}</span>
         </div>
 

@@ -5,9 +5,10 @@ interface InputBarProps {
   onSend: (message: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  variant?: "landing" | "compact";
 }
 
-const InputBar = ({ onSend, disabled = false, placeholder }: InputBarProps) => {
+const InputBar = ({ onSend, disabled = false, placeholder, variant = "compact" }: InputBarProps) => {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -33,27 +34,51 @@ const InputBar = ({ onSend, disabled = false, placeholder }: InputBarProps) => {
     }
   };
 
-  return (
-    <div className="border-t border-border bg-background/80 backdrop-blur-xl p-4">
-      <div className="max-w-3xl mx-auto relative">
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder || "Describe the AI you want to build..."}
-          disabled={disabled}
-          rows={1}
-          className="w-full bg-muted text-foreground rounded-xl px-4 py-3 pr-12 resize-none outline-none placeholder:text-muted-foreground text-sm font-sans disabled:opacity-50"
-        />
-        <button
-          onClick={handleSubmit}
-          disabled={disabled || !value.trim()}
-          className="absolute right-2 bottom-2 w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:brightness-110 transition-all"
-        >
-          <ArrowUp className="w-4 h-4" />
-        </button>
+  if (variant === "landing") {
+    return (
+      <div className="relative">
+        <div className="bg-white rounded-2xl shadow-lg shadow-black/[0.06] border border-border/80 overflow-hidden">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder || "Describe the AI you want to build..."}
+            disabled={disabled}
+            rows={1}
+            className="w-full bg-transparent text-foreground px-5 py-4 pr-14 resize-none outline-none placeholder:text-muted-foreground/70 text-[15px] font-sans disabled:opacity-50"
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={disabled || !value.trim()}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:brightness-110 transition-all animate-pulse-glow"
+          >
+            <ArrowUp className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder || "Type a message..."}
+        disabled={disabled}
+        rows={1}
+        className="w-full bg-muted/60 text-foreground rounded-xl px-4 py-2.5 pr-11 resize-none outline-none placeholder:text-muted-foreground text-sm font-sans disabled:opacity-50 border border-transparent focus:border-primary/30 transition-colors"
+      />
+      <button
+        onClick={handleSubmit}
+        disabled={disabled || !value.trim()}
+        className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:brightness-110 transition-all"
+      >
+        <ArrowUp className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 };

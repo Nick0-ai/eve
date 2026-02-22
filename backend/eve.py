@@ -303,8 +303,10 @@ async def deploy_training(req: DeployRequest):
 
         yield sse("status", {"message": "Loading TinyLlama 1.1B weights...", "progress": 8})
 
-        # Launch real Modal training in a thread (it's a blocking .remote() call)
-        from modal_train import train_model
+        # Launch real Modal training via deployed function
+        import modal
+
+        train_fn = modal.Function.from_name("eve-training", "train_model")
 
         loop = asyncio.get_event_loop()
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
@@ -312,7 +314,7 @@ async def deploy_training(req: DeployRequest):
         # Start Modal training
         future = loop.run_in_executor(
             executor,
-            lambda: train_model.remote(
+            lambda: train_fn.remote(
                 dataset_json=dataset_json,
                 task=req.task,
                 model_id=model_id,
@@ -425,7 +427,8 @@ async def playground(req: PlaygroundRequest):
     # Try real Modal inference if model exists
     if req.model_id and req.model_id in _trained_models:
         try:
-            from modal_train import run_inference
+            import modal
+            inference_fn = modal.Function.from_name("eve-training", "run_inference")
             model_info = _trained_models[req.model_id]
 
             loop = asyncio.get_event_loop()
@@ -433,7 +436,7 @@ async def playground(req: PlaygroundRequest):
 
             output = await loop.run_in_executor(
                 executor,
-                lambda: run_inference.remote(
+                lambda: inference_fn.remote(
                     model_id=req.model_id,
                     input_text=req.input_text,
                     task=model_info["task"],

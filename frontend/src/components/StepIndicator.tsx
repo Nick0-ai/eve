@@ -4,7 +4,7 @@ const steps = [
   { key: "code", label: "Code" },
   { key: "scan", label: "GPU" },
   { key: "training", label: "Train" },
-  { key: "done", label: "Test" },
+  { key: "done", label: "Done" },
 ];
 
 interface StepIndicatorProps {
@@ -17,21 +17,21 @@ const StepIndicator = ({ currentStep }: StepIndicatorProps) => {
   const current = stepIndex(currentStep);
 
   return (
-    <div className="flex items-center justify-center gap-1 py-3 border-b border-border bg-background/80 backdrop-blur-xl">
+    <div className="flex items-center gap-1">
       {steps.map((step, i) => {
         const isActive = i === current;
         const isDone = i < current;
 
         return (
           <div key={step.key} className="flex items-center">
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <div
-                className={`w-2 h-2 rounded-full transition-all ${
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
                   isDone
                     ? "bg-primary"
                     : isActive
-                    ? "bg-primary ring-4 ring-primary/20"
-                    : "bg-muted"
+                    ? "bg-primary ring-[3px] ring-primary/20"
+                    : "bg-border"
                 }`}
               />
               <span
@@ -44,8 +44,8 @@ const StepIndicator = ({ currentStep }: StepIndicatorProps) => {
             </div>
             {i < steps.length - 1 && (
               <div
-                className={`w-8 h-px mx-1 mb-4 transition-colors ${
-                  isDone ? "bg-primary" : "bg-muted"
+                className={`w-4 h-px mx-1 transition-colors ${
+                  isDone ? "bg-primary" : "bg-border"
                 }`}
               />
             )}

@@ -419,8 +419,10 @@ async def scan_all_regions() -> dict:
 
     best = all_gpus[0]
     # Add cost estimate for 4h training
-    best["total_cost_estimate_usd"] = round(best["spot_price_usd_hr"] * 4, 2)
-    best["total_co2_grams"] = round(best["co2_grams_per_hr"] * 4, 1)
+    est_hours = 0.15  # ~10 min for TinyLlama + LoRA on small dataset
+    best["estimated_training_min"] = round(est_hours * 60)
+    best["total_cost_estimate_usd"] = round(best["spot_price_usd_hr"] * est_hours, 3)
+    best["total_co2_grams"] = round(best["co2_grams_per_hr"] * est_hours, 1)
     best["strategy"] = "immediate" if best["availability"] == "high" else "wait_or_migrate"
 
     # Alternatives: up to 4, different GPUs or regions from best
