@@ -37,7 +37,7 @@ const InputBar = ({ onSend, disabled = false, placeholder, variant = "compact" }
   if (variant === "landing") {
     return (
       <div className="relative">
-        <div className="bg-white rounded-2xl shadow-lg shadow-black/[0.06] border border-border/80 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg shadow-black/[0.06] border border-border/80 overflow-hidden input-glow transition-all duration-300">
           <textarea
             ref={textareaRef}
             value={value}
@@ -70,7 +70,7 @@ const InputBar = ({ onSend, disabled = false, placeholder, variant = "compact" }
         placeholder={placeholder || "Type a message..."}
         disabled={disabled}
         rows={1}
-        className="w-full bg-muted/60 text-foreground rounded-xl px-4 py-2.5 pr-11 resize-none outline-none placeholder:text-muted-foreground text-sm font-sans disabled:opacity-50 border border-transparent focus:border-primary/30 transition-colors"
+        className="w-full bg-muted/60 text-foreground rounded-xl px-4 py-2.5 pr-11 resize-none outline-none placeholder:text-muted-foreground text-sm font-sans disabled:opacity-50 border border-transparent focus:border-primary/40 transition-all duration-200 focus:shadow-[0_0_12px_rgba(234,179,8,0.12)]"
       />
       <button
         onClick={handleSubmit}
