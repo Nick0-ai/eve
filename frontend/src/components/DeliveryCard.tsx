@@ -48,7 +48,7 @@ const DeliveryCard = ({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card border border-primary/30 rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm"
+      className="bg-card border border-primary/30 rounded-xl overflow-hidden border-l-4 border-l-primary animate-pulse-glow-strong"
     >
       <div className="px-4 py-3 flex items-center gap-2 border-b border-border bg-primary/5">
         <CheckCircle2 className="w-4 h-4 text-primary" />
@@ -59,7 +59,7 @@ const DeliveryCard = ({
         {/* Stats */}
         <div className="grid grid-cols-4 gap-3">
           <div className="text-center">
-            <p className="text-lg font-bold text-primary">{accuracy}%</p>
+            <p className="text-lg font-bold text-shimmer">{accuracy}%</p>
             <p className="text-[10px] text-muted-foreground">Accuracy</p>
           </div>
           <div className="text-center">
@@ -109,7 +109,7 @@ const DeliveryCard = ({
             <button
               onClick={handleTest}
               disabled={loading || !playgroundInput.trim()}
-              className="bg-primary text-primary-foreground text-xs font-medium px-4 py-2 rounded-lg inline-flex items-center gap-1.5 hover:brightness-110 transition disabled:opacity-50"
+              className="bg-primary text-primary-foreground text-xs font-medium px-4 py-2 rounded-lg inline-flex items-center gap-1.5 btn-glow disabled:opacity-50"
             >
               <Play className="w-3.5 h-3.5" />
               {loading ? "Running..." : "Run"}

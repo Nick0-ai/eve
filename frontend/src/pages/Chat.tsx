@@ -339,10 +339,12 @@ const Chat = () => {
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col items-center justify-center relative overflow-hidden"
           >
-            {/* Mesh gradient blobs */}
-            <div className="mesh-blob mesh-blob-yellow animate-float-slow" style={{ width: 500, height: 500, top: '10%', left: '15%' }} />
-            <div className="mesh-blob mesh-blob-blue animate-float-slower" style={{ width: 400, height: 400, top: '20%', right: '10%' }} />
-            <div className="mesh-blob mesh-blob-warm animate-float-slow" style={{ width: 350, height: 350, bottom: '15%', left: '40%' }} />
+            {/* Mesh gradient blobs — layered for depth */}
+            <div className="mesh-blob mesh-blob-gold animate-float-drift" style={{ width: 700, height: 700, top: '-5%', left: '5%' }} />
+            <div className="mesh-blob mesh-blob-yellow animate-float-slow" style={{ width: 550, height: 550, top: '15%', right: '0%' }} />
+            <div className="mesh-blob mesh-blob-blue animate-float-slower" style={{ width: 400, height: 400, top: '25%', right: '15%' }} />
+            <div className="mesh-blob mesh-blob-warm animate-float-slow" style={{ width: 500, height: 500, bottom: '5%', left: '30%' }} />
+            <div className="mesh-blob mesh-blob-yellow animate-float-drift" style={{ width: 300, height: 300, bottom: '20%', right: '5%' }} />
 
             <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
               {/* Badge */}
@@ -352,7 +354,7 @@ const Chat = () => {
                 transition={{ delay: 0.1 }}
                 className="flex justify-center mb-8"
               >
-                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3.5 py-1.5 rounded-full text-xs font-medium">
+                <div className="inline-flex items-center gap-2 bg-primary/15 text-primary px-3.5 py-1.5 rounded-full text-xs font-medium border border-primary/20 animate-glow-ambient">
                   <Sparkles className="w-3.5 h-3.5" />
                   Powered by NERVE
                 </div>
@@ -363,9 +365,9 @@ const Chat = () => {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="text-4xl sm:text-5xl font-bold text-foreground text-center tracking-tight mb-3"
+                className="text-4xl sm:text-5xl font-bold text-center tracking-tight mb-3"
               >
-                What do you want to build?
+                What do you want to <span className="text-shimmer">build</span>?
               </motion.h1>
 
               <motion.p
@@ -402,7 +404,7 @@ const Chat = () => {
                   <button
                     key={hint}
                     onClick={() => sendMessage(hint)}
-                    className="text-xs text-muted-foreground hover:text-foreground border border-border hover:border-primary/40 px-3 py-1.5 rounded-full transition-all hover:bg-primary/5"
+                    className="text-xs text-muted-foreground hover:text-foreground border border-border hover:border-primary/40 px-3 py-1.5 rounded-full transition-all hover:bg-primary/5 hover:shadow-[0_0_16px_rgba(234,179,8,0.15)]"
                   >
                     {hint}
                   </button>
@@ -424,10 +426,10 @@ const Chat = () => {
             className="flex-1 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="h-12 border-b border-border bg-white flex items-center justify-between px-5 shrink-0">
+            <div className="h-12 border-b border-border bg-white flex items-center justify-between px-5 shrink-0 header-glow">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center avatar-glow">
                     <Sparkles className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <span className="text-sm font-semibold text-foreground tracking-tight">EVE</span>
@@ -476,7 +478,7 @@ const Chat = () => {
                     {!currentAction && (
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center py-20">
-                          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse-glow">
                             <Sparkles className="w-6 h-6 text-primary/60" />
                           </div>
                           <p className="text-sm text-muted-foreground">

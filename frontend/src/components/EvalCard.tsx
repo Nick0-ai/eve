@@ -17,7 +17,7 @@ const EvalCard = ({ results }: EvalCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm"
+    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm animate-glow-ambient"
   >
     <div className="px-4 py-3 flex items-center gap-2 border-b border-border">
       <BarChart3 className="w-4 h-4 text-primary" />
@@ -42,7 +42,7 @@ const EvalCard = ({ results }: EvalCardProps) => (
           <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
             <motion.div
               className={`h-full rounded-full ${
-                r.accuracy >= 90 ? "bg-primary" : "bg-amber-400"
+                r.accuracy >= 90 ? "bg-primary shadow-[0_0_8px_rgba(234,179,8,0.4)]" : "bg-amber-400"
               }`}
               initial={{ width: 0 }}
               animate={{ width: `${r.accuracy}%` }}

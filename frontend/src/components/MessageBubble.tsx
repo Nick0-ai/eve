@@ -21,7 +21,7 @@ const MessageBubble = ({ role, content, isStreaming }: MessageBubbleProps) => {
       className={`flex gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}
     >
       {!isUser && (
-        <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
+        <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center shrink-0 mt-0.5 avatar-glow">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
         </div>
       )}

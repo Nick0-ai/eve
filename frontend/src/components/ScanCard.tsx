@@ -26,7 +26,7 @@ const ScanCard = ({ result, loading, onDeploy }: ScanCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm"
+    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm animate-glow-ambient"
   >
     <div className="px-4 py-3 flex items-center gap-2 border-b border-border">
       <Cpu className="w-4 h-4 text-primary" />
@@ -83,7 +83,7 @@ const ScanCard = ({ result, loading, onDeploy }: ScanCardProps) => (
           </div>
         </div>
 
-        <div className="flex items-center justify-between bg-primary/10 rounded-lg px-3 py-2 mb-4">
+        <div className="flex items-center justify-between bg-primary/10 rounded-lg px-3 py-2 mb-4 border border-primary/20 shadow-[0_0_12px_rgba(234,179,8,0.08)]">
           <span className="text-xs text-muted-foreground">Estimated cost (~10 min training)</span>
           <span className="text-sm font-bold text-primary">${result.total_cost_estimate_usd}</span>
         </div>
@@ -91,7 +91,7 @@ const ScanCard = ({ result, loading, onDeploy }: ScanCardProps) => (
         {onDeploy && (
           <button
             onClick={onDeploy}
-            className="w-full bg-primary text-primary-foreground text-sm font-medium py-2.5 rounded-lg hover:brightness-110 transition"
+            className="w-full bg-primary text-primary-foreground text-sm font-medium py-2.5 rounded-lg btn-glow"
           >
             Deploy to this GPU →
           </button>

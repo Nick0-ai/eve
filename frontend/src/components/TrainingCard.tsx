@@ -31,10 +31,10 @@ const TrainingCard = ({
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-amber-400 shadow-sm"
+    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm animate-glow-ambient"
   >
     <div className="px-4 py-3 flex items-center gap-2 border-b border-border">
-      <Activity className="w-4 h-4 text-amber-400" />
+      <Activity className="w-4 h-4 text-primary" />
       <span className="text-sm font-semibold text-foreground">Training</span>
       {status && (
         <span className="text-[10px] text-muted-foreground ml-auto">{status}</span>
@@ -50,7 +50,7 @@ const TrainingCard = ({
         </div>
         <div className="h-2 bg-muted rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-primary rounded-full"
+            className="h-full bg-primary rounded-full shadow-[0_0_8px_rgba(234,179,8,0.4)]"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}

@@ -21,7 +21,7 @@ const CodeCard = ({ code, loading, onDeploy }: CodeCardProps) => {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm"
+      className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm animate-glow-ambient"
     >
       <div className="px-4 py-3 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-2">
@@ -63,7 +63,7 @@ const CodeCard = ({ code, loading, onDeploy }: CodeCardProps) => {
         <div className="px-4 py-3 border-t border-border">
           <button
             onClick={onDeploy}
-            className="bg-primary text-primary-foreground text-xs font-medium px-4 py-2 rounded-lg inline-flex items-center gap-1.5 hover:brightness-110 transition"
+            className="bg-primary text-primary-foreground text-xs font-medium px-4 py-2 rounded-lg inline-flex items-center gap-1.5 btn-glow"
           >
             <Rocket className="w-3.5 h-3.5" />
             Deploy this
