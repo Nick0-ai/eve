@@ -157,9 +157,26 @@ def train_model(
     train_loss = train_result.training_loss
     eval_loss = eval_result.get("eval_loss", train_loss * 1.1)
 
-    # Approximate accuracy from eval loss (heuristic for demo)
-    # Lower loss → higher accuracy
-    accuracy = max(50, min(99, 100 - eval_loss * 15))
+    # Real accuracy — run inference on eval set
+    correct = 0
+    eval_examples = examples[split_idx:]
+    model.eval()
+    for ex in eval_examples:
+        prompt = f"### Task: {task}\n### Input:\n{ex['input']}\n### Output:\n"
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+        with torch.no_grad():
+            out = model.generate(
+                **inputs,
+                max_new_tokens=64,
+                do_sample=False,
+                pad_token_id=tokenizer.pad_token_id,
+            )
+        generated = tokenizer.decode(out[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True).strip()
+        expected = ex["output"].strip()
+        if generated.lower() == expected.lower():
+            correct += 1
+    accuracy = round(correct / max(len(eval_examples), 1) * 100, 1)
+    print(f"[EVE] Real accuracy: {correct}/{len(eval_examples)} = {accuracy}%")
 
     # Estimate cost (Modal T4 = ~$0.59/hr)
     cost_usd = round(elapsed / 3600 * 0.59, 2)

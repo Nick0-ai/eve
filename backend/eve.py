@@ -283,8 +283,20 @@ async def scan_gpu(req: ScanRequest):
 # 5. POST /api/deploy — Real Modal GPU training with progress SSE
 # ---------------------------------------------------------------------------
 
-# Store trained model IDs for playground
-_trained_models: dict[str, dict] = {}
+# Persist trained model metadata across restarts
+MODELS_FILE = os.path.join(os.path.dirname(__file__), "trained_models.json")
+
+def _load_models() -> dict[str, dict]:
+    if os.path.exists(MODELS_FILE):
+        with open(MODELS_FILE) as f:
+            return json.load(f)
+    return {}
+
+def _save_models():
+    with open(MODELS_FILE, "w") as f:
+        json.dump(_trained_models, f, indent=2)
+
+_trained_models: dict[str, dict] = _load_models()
 
 @app.post("/api/deploy")
 async def deploy_training(req: DeployRequest):
@@ -395,12 +407,13 @@ async def deploy_training(req: DeployRequest):
         yield sse("status", {"message": "Finalizing model...", "progress": 95})
         await asyncio.sleep(1)
 
-        # Store model info for playground
+        # Store model info for playground (persisted to disk)
         _trained_models[model_id] = {
             "model_id": model_id,
             "task": req.task,
             "base_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         }
+        _save_models()
 
         yield sse("complete", {
             "final_loss": round(real_train_loss, 4),
@@ -424,54 +437,31 @@ async def deploy_training(req: DeployRequest):
 async def playground(req: PlaygroundRequest):
     import concurrent.futures
 
-    # Try real Modal inference if model exists
-    if req.model_id and req.model_id in _trained_models:
-        try:
-            import modal
-            inference_fn = modal.Function.from_name("eve-training", "run_inference")
-            model_info = _trained_models[req.model_id]
-
-            loop = asyncio.get_event_loop()
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-
-            output = await loop.run_in_executor(
-                executor,
-                lambda: inference_fn.remote(
-                    model_id=req.model_id,
-                    input_text=req.input_text,
-                    task=model_info["task"],
-                    base_model=model_info["base_model"],
-                ),
-            )
-
-            return {"output": output, "source": "modal"}
-        except Exception as e:
-            print(f"[EVE] Modal inference failed, falling back to Claude: {e}")
-
-    # Fallback: Claude few-shot
-    examples_text = "\n\n".join(
-        [f"Input: {e.get('input', '')}\nOutput: {e.get('output', '')}" for e in req.examples[:8]]
-    )
-    prompt = f"""You are a fine-tuned AI model specialized in: {req.task}
-
-You were trained on examples like these:
-
-{examples_text}
-
-Now process this new input. Respond ONLY with the output, matching the exact style and format of the training examples above. No explanation, no preamble.
-
-Input: {req.input_text}
-Output:"""
+    if not req.model_id or req.model_id not in _trained_models:
+        return {"output": "Error: model not found. Train a model first.", "source": "error"}
 
     try:
-        response = client.messages.create(
-            model=FAST_MODEL,
-            max_tokens=512,
-            messages=[{"role": "user", "content": prompt}],
+        import modal
+        inference_fn = modal.Function.from_name("eve-training", "run_inference")
+        model_info = _trained_models[req.model_id]
+
+        loop = asyncio.get_event_loop()
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+        output = await loop.run_in_executor(
+            executor,
+            lambda: inference_fn.remote(
+                model_id=req.model_id,
+                input_text=req.input_text,
+                task=model_info["task"],
+                base_model=model_info["base_model"],
+            ),
         )
-        return {"output": response.content[0].text.strip(), "source": "claude_fallback"}
+
+        return {"output": output, "source": "modal"}
     except Exception as e:
-        return {"output": f"Error: {e}"}
+        print(f"[EVE] Modal inference failed: {e}")
+        return {"output": f"Error: inference failed — {e}", "source": "error"}
 
 # ---------------------------------------------------------------------------
 # Health check

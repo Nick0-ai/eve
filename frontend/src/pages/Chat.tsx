@@ -347,19 +347,6 @@ const Chat = () => {
             <div className="mesh-blob mesh-blob-yellow animate-float-drift" style={{ width: 300, height: 300, bottom: '20%', right: '5%' }} />
 
             <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
-              {/* Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="flex justify-center mb-8"
-              >
-                <div className="inline-flex items-center gap-2 bg-primary/15 text-primary px-3.5 py-1.5 rounded-full text-xs font-medium border border-primary/20 animate-glow-ambient">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Powered by NERVE
-                </div>
-              </motion.div>
-
               {/* Title */}
               <motion.h1
                 initial={{ opacity: 0, y: 16 }}
