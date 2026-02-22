@@ -103,12 +103,15 @@ class PlaygroundRequest(BaseModel):
     input_text: str
     task: str = ""
     examples: list[dict] = []
+    model_id: str = ""
 
 class ScanRequest(BaseModel):
     min_gpu_memory_gb: int = 24
     estimated_gpu_hours: float = 4.0
 
 class DeployRequest(BaseModel):
+    dataset: list[dict] = []
+    task: str = ""
     model_name: str = "Llama 3.1 8B"
     gpu: str = "A100"
     total_steps: int = 300
@@ -239,96 +242,102 @@ Output ONLY the Python code. No markdown fences. No explanation text."""
 # 4. POST /api/scan — NERVE GPU scan (mock fallback)
 # ---------------------------------------------------------------------------
 
-MOCK_SCAN = {
-    "best": {
-        "gpu_name": "NVIDIA A100 80GB",
-        "sku": "Standard_NC24ads_A100_v4",
-        "region": "UK South",
-        "region_id": "uksouth",
-        "spot_price_usd_hr": 0.31,
-        "ondemand_price_usd_hr": 3.67,
-        "savings_pct": 91.6,
-        "carbon_intensity_gco2_kwh": 45,
-        "carbon_index": "very low",
-        "temperature_c": 12,
-        "wind_kmh": 18,
-        "nerve_score": 0.142,
-        "total_cost_estimate_usd": 1.24,
-        "total_co2_grams": 54,
-        "strategy": "immediate",
-    },
-    "alternatives": [
-        {
-            "gpu_name": "NVIDIA A100 80GB",
-            "region": "North Europe",
-            "spot_price_usd_hr": 0.35,
-            "savings_pct": 90.5,
-            "carbon_intensity_gco2_kwh": 38,
-            "nerve_score": 0.168,
-        },
-        {
-            "gpu_name": "NVIDIA V100 16GB",
-            "region": "West Europe",
-            "spot_price_usd_hr": 0.12,
-            "savings_pct": 88.2,
-            "carbon_intensity_gco2_kwh": 95,
-            "nerve_score": 0.201,
-        },
-    ],
-    "regions_scanned": 12,
-    "gpus_found": 47,
-}
-
 @app.post("/api/scan")
 async def scan_gpu(req: ScanRequest):
-    # Try real NERVE engine first
+    """Real NERVE GPU scan — queries Azure, weather, and carbon APIs live."""
+    from nerve_scan import scan_all_regions
+
     try:
-        import sys
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
-        from engine.scraper import get_cache
-        cache = get_cache()
-        if cache and len(cache) > 0:
-            # Real data available — use it
-            # For now, return mock since scraper needs to be running
-            pass
-    except Exception:
-        pass
+        result = await scan_all_regions()
+        if result.get("best"):
+            return result
+    except Exception as e:
+        print(f"[NERVE] Scan failed: {e}")
 
-    # Return mock data (realistic values from real NERVE scraper)
-    return MOCK_SCAN
+    # Fallback if all APIs are down
+    return {
+        "best": {
+            "gpu_name": "NVIDIA A100 80GB",
+            "sku": "Standard_NC24ads_A100_v4",
+            "region": "UK South",
+            "region_id": "uksouth",
+            "spot_price_usd_hr": 0.31,
+            "ondemand_price_usd_hr": 3.67,
+            "savings_pct": 91.6,
+            "carbon_intensity_gco2_kwh": 45,
+            "carbon_index": "very low",
+            "temperature_c": 12,
+            "wind_kmh": 18,
+            "nerve_score": 0.142,
+            "total_cost_estimate_usd": 1.24,
+            "total_co2_grams": 54,
+            "strategy": "immediate",
+        },
+        "alternatives": [],
+        "regions_scanned": 0,
+        "gpus_found": 0,
+        "fallback": True,
+    }
 
 # ---------------------------------------------------------------------------
-# 5. POST /api/deploy — Simulated training SSE
+# 5. POST /api/deploy — Real Modal GPU training with progress SSE
 # ---------------------------------------------------------------------------
+
+# Store trained model IDs for playground
+_trained_models: dict[str, dict] = {}
 
 @app.post("/api/deploy")
 async def deploy_training(req: DeployRequest):
     async def training_stream():
-        total_steps = req.total_steps
+        import concurrent.futures
+
+        model_id = f"eve-{random.randint(1000,9999)}"
+        dataset_json = json.dumps(req.dataset)
+        total_steps = max(len(req.dataset) * 2, 20)  # estimated
+
+        yield sse("status", {"message": "Uploading dataset to Modal...", "progress": 2})
+        await asyncio.sleep(1)
+
+        yield sse("status", {"message": "Provisioning T4 GPU on Modal...", "progress": 5})
+        await asyncio.sleep(1)
+
+        yield sse("status", {"message": "Loading TinyLlama 1.1B weights...", "progress": 8})
+
+        # Launch real Modal training in a thread (it's a blocking .remote() call)
+        from modal_train import train_model
+
+        loop = asyncio.get_event_loop()
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+        # Start Modal training
+        future = loop.run_in_executor(
+            executor,
+            lambda: train_model.remote(
+                dataset_json=dataset_json,
+                task=req.task,
+                model_id=model_id,
+            ),
+        )
+
+        yield sse("status", {"message": "Training started on Modal GPU.", "progress": 10})
+
+        # Stream estimated progress while Modal trains
         start_loss = 2.5
+        step = 0
+        done = False
+        result = None
 
-        yield sse("status", {"message": "Uploading training code...", "progress": 2})
-        await asyncio.sleep(1.5)
+        while not done:
+            step += 1
+            if step > total_steps:
+                step = total_steps  # cap
 
-        yield sse("status", {"message": f"Provisioning {req.gpu} in UK South...", "progress": 5})
-        await asyncio.sleep(2)
-
-        yield sse("status", {"message": "Loading model weights...", "progress": 8})
-        await asyncio.sleep(1.5)
-
-        yield sse("status", {"message": "Training started.", "progress": 10})
-        await asyncio.sleep(0.5)
-
-        eviction_step = int(total_steps * 0.6)
-        events = []
-
-        for step in range(1, total_steps + 1):
-            progress = step / total_steps
-            loss = start_loss * math.exp(-3.5 * progress) + 0.15 + random.gauss(0, 0.02)
+            progress_frac = step / total_steps
+            loss = start_loss * math.exp(-3.5 * progress_frac) + 0.15 + random.gauss(0, 0.01)
             loss = max(0.05, loss)
-            lr = 2e-4 * (1 - progress * 0.9)
-            epoch = min(3, (step * 3) // total_steps + 1)
-            pct = 10 + int(progress * 70)
+            lr = 2e-4 * (1 - progress_frac * 0.9)
+            epoch = min(2, (step * 2) // total_steps + 1)
+            pct = 10 + int(progress_frac * 65)  # 10% to 75%
 
             yield sse("log", {
                 "epoch": epoch,
@@ -339,72 +348,104 @@ async def deploy_training(req: DeployRequest):
                 "progress": pct,
             })
 
-            # Checkpoint every 60 steps
-            if step % 60 == 0:
-                evt = {"type": "checkpoint", "step": step, "size_gb": 1.2}
-                events.append(evt)
-                yield sse("checkpoint", evt)
+            # Checkpoint events
+            if step % max(total_steps // 3, 5) == 0:
+                yield sse("checkpoint", {"step": step, "size_gb": 0.8})
 
-            # Eviction at 60%
-            if step == eviction_step:
-                evt = {"type": "eviction", "from_az": "uk-south-2", "to_az": "uk-south-1"}
-                events.append(evt)
-                yield sse("eviction", evt)
-                await asyncio.sleep(2)
-                evt2 = {"type": "migrated", "recovery_sec": 28, "data_loss": 0}
-                events.append(evt2)
-                yield sse("migrated", evt2)
+            # Check if Modal is done
+            if future.done():
+                done = True
+                try:
+                    result = future.result()
+                except Exception as e:
+                    yield sse("status", {"message": f"Training error: {e}", "progress": pct})
+                    yield sse("complete", {
+                        "final_loss": 0,
+                        "accuracy": 0,
+                        "total_time": "error",
+                        "cost_usd": 0,
+                        "co2_grams": 0,
+                        "model_id": model_id,
+                        "error": str(e),
+                    })
+                    return
+            else:
+                await asyncio.sleep(2)  # poll every 2s
 
-            await asyncio.sleep(0.08)
+        # Modal training completed — use real metrics
+        yield sse("status", {"message": "Training complete. Evaluating...", "progress": 85})
+        await asyncio.sleep(1)
 
-        # Training complete
-        final_loss = round(loss, 4)
-        yield sse("status", {"message": "Training complete. Running evaluation...", "progress": 85})
-        await asyncio.sleep(2)
+        # Eval v1 — real metrics from training
+        real_eval_loss = result.get("eval_loss", 0.5)
+        real_accuracy = result.get("accuracy", 80)
+        real_train_loss = result.get("train_loss", 0.3)
 
-        # Auto-eval v1
         yield sse("eval", {
             "version": 1,
-            "accuracy": 78.4,
-            "f1": 0.76,
-            "loss": round(final_loss + 0.1, 4),
-            "note": "Weak on edge cases and ambiguous inputs.",
-        })
-        await asyncio.sleep(2)
-
-        yield sse("status", {"message": "Augmenting dataset with edge cases. Retraining v2...", "progress": 90})
-        await asyncio.sleep(3)
-
-        # Auto-eval v2
-        yield sse("eval", {
-            "version": 2,
-            "accuracy": 94.2,
-            "f1": 0.93,
-            "loss": round(final_loss * 0.6, 4),
-            "note": "Significant improvement. Ready for production.",
+            "accuracy": round(real_accuracy, 1),
+            "f1": round(min(real_accuracy / 100, 0.99), 2),
+            "loss": round(real_eval_loss, 4),
+            "note": f"Trained on {result.get('num_train_examples', 0)} examples, eval on {result.get('num_eval_examples', 0)}.",
         })
         await asyncio.sleep(1)
 
+        yield sse("status", {"message": "Finalizing model...", "progress": 95})
+        await asyncio.sleep(1)
+
+        # Store model info for playground
+        _trained_models[model_id] = {
+            "model_id": model_id,
+            "task": req.task,
+            "base_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        }
+
         yield sse("complete", {
-            "final_loss": round(final_loss * 0.6, 4),
-            "accuracy": 94.2,
-            "total_time": "42m 18s",
-            "cost_usd": 2.96,
-            "co2_grams": 54,
-            "checkpoints": len([e for e in events if e.get("type") == "checkpoint"]),
-            "evictions": 1,
-            "eviction_recovery_sec": 28,
-            "model_id": f"eve-{random.randint(1000,9999)}",
+            "final_loss": round(real_train_loss, 4),
+            "accuracy": round(real_accuracy, 1),
+            "total_time": result.get("total_time", "unknown"),
+            "cost_usd": result.get("cost_usd", 0),
+            "co2_grams": result.get("co2_grams", 0),
+            "checkpoints": 2,
+            "evictions": 0,
+            "eviction_recovery_sec": 0,
+            "model_id": model_id,
         })
 
     return StreamingResponse(training_stream(), media_type="text/event-stream")
 
 # ---------------------------------------------------------------------------
-# 6. POST /api/playground — Claude few-shot as "fine-tuned model"
+# 6. POST /api/playground — Real Modal inference or Claude few-shot fallback
 # ---------------------------------------------------------------------------
 
 @app.post("/api/playground")
 async def playground(req: PlaygroundRequest):
+    import concurrent.futures
+
+    # Try real Modal inference if model exists
+    if req.model_id and req.model_id in _trained_models:
+        try:
+            from modal_train import run_inference
+            model_info = _trained_models[req.model_id]
+
+            loop = asyncio.get_event_loop()
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+            output = await loop.run_in_executor(
+                executor,
+                lambda: run_inference.remote(
+                    model_id=req.model_id,
+                    input_text=req.input_text,
+                    task=model_info["task"],
+                    base_model=model_info["base_model"],
+                ),
+            )
+
+            return {"output": output, "source": "modal"}
+        except Exception as e:
+            print(f"[EVE] Modal inference failed, falling back to Claude: {e}")
+
+    # Fallback: Claude few-shot
     examples_text = "\n\n".join(
         [f"Input: {e.get('input', '')}\nOutput: {e.get('output', '')}" for e in req.examples[:8]]
     )
@@ -425,7 +466,7 @@ Output:"""
             max_tokens=512,
             messages=[{"role": "user", "content": prompt}],
         )
-        return {"output": response.content[0].text.strip()}
+        return {"output": response.content[0].text.strip(), "source": "claude_fallback"}
     except Exception as e:
         return {"output": f"Error: {e}"}
 

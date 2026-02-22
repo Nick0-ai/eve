@@ -87,11 +87,18 @@ export interface DeployCallbacks {
   onComplete: (data: Record<string, unknown>) => void;
 }
 
-export async function streamDeploy(callbacks: DeployCallbacks) {
+export async function streamDeploy(
+  params: {
+    dataset: Array<{ input: string; output: string }>;
+    task: string;
+    model_name?: string;
+  },
+  callbacks: DeployCallbacks
+) {
   const res = await fetch(`${BASE}/api/deploy`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({}),
+    body: JSON.stringify(params),
   });
 
   if (!res.ok || !res.body) return;
@@ -174,6 +181,7 @@ export async function runPlayground(params: {
   input_text: string;
   task: string;
   examples: Array<{ input: string; output: string }>;
+  model_id?: string;
 }) {
   const res = await fetch(`${BASE}/api/playground`, {
     method: "POST",

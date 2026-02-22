@@ -26,13 +26,13 @@ const ScanCard = ({ result, loading, onDeploy }: ScanCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-cyan-400"
+    className="bg-card border border-border rounded-xl overflow-hidden border-l-4 border-l-primary shadow-sm"
   >
     <div className="px-4 py-3 flex items-center gap-2 border-b border-border">
-      <Cpu className="w-4 h-4 text-cyan-400" />
+      <Cpu className="w-4 h-4 text-primary" />
       <span className="text-sm font-semibold text-foreground">NERVE GPU Scan</span>
-      <span className="text-[10px] font-mono bg-cyan-400/10 text-cyan-400 px-2 py-0.5 rounded-full">
-        12 regions scanned
+      <span className="text-[10px] font-mono bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+        3 regions scanned
       </span>
     </div>
 
@@ -66,12 +66,12 @@ const ScanCard = ({ result, loading, onDeploy }: ScanCardProps) => (
             <p className="text-[10px] text-muted-foreground">NERVE score</p>
           </div>
           <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-            <Leaf className="w-3.5 h-3.5 text-emerald-400 mx-auto mb-1" />
+            <Leaf className="w-3.5 h-3.5 text-green-500 mx-auto mb-1" />
             <p className="text-xs font-bold text-foreground">{result.carbon_intensity_gco2_kwh}g</p>
             <p className="text-[10px] text-muted-foreground">CO₂/kWh</p>
           </div>
           <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-            <Thermometer className="w-3.5 h-3.5 text-blue-400 mx-auto mb-1" />
+            <Thermometer className="w-3.5 h-3.5 text-sky-500 mx-auto mb-1" />
             <p className="text-xs font-bold text-foreground">{result.temperature_c}°C</p>
             <p className="text-[10px] text-muted-foreground">Temp</p>
           </div>

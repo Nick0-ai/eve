@@ -32,7 +32,7 @@ const MessageBubble = ({ role, content, isStreaming, children }: MessageBubblePr
           className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
             isUser
               ? "bg-primary text-primary-foreground rounded-br-md"
-              : "bg-card text-card-foreground rounded-bl-md"
+              : "bg-card border border-border text-card-foreground rounded-bl-md shadow-sm"
           }`}
         >
           <div className="whitespace-pre-wrap">{displayContent}</div>
