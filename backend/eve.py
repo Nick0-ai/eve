@@ -163,7 +163,7 @@ async def chat(req: ChatRequest):
     return StreamingResponse(generate(), media_type="text/event-stream")
 
 # ---------------------------------------------------------------------------
-# 2. POST /api/generate-dataset — Real Claude call
+# 2. POST /api/generate-dataset — Generate training data
 # ---------------------------------------------------------------------------
 
 @app.post("/api/generate-dataset")
@@ -200,7 +200,7 @@ Example format:
         return {"examples": [], "count": 0, "error": str(e)}
 
 # ---------------------------------------------------------------------------
-# 3. POST /api/generate-code — Real Claude call
+# 3. POST /api/generate-code — Generate training script
 # ---------------------------------------------------------------------------
 
 @app.post("/api/generate-code")
@@ -430,7 +430,7 @@ async def deploy_training(req: DeployRequest):
     return StreamingResponse(training_stream(), media_type="text/event-stream")
 
 # ---------------------------------------------------------------------------
-# 6. POST /api/playground — Real Modal inference or Claude few-shot fallback
+# 6. POST /api/playground — Real Modal inference or few-shot fallback
 # ---------------------------------------------------------------------------
 
 @app.post("/api/playground")
